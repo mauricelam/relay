@@ -1,33 +1,33 @@
 /*jshint es5:true */
 
-var ngr;
+var ngr = ngr || {};
+
+(function () {
 
 var WatchedBox = {
-    addProperty: function (name) {
-        Object.defineProperty(this, name, {
-            get: function () {
-                return this['_' + name];
-            },
-            set: function (value) {
-                if (this._watchers && this._watchers[name]) {
-                    this._watchers[name].forEach(function (watcher) {
-                        watcher(value, this['_' + name]);
-                    }.bind(this));
+        addProperty: function (name) {
+            Object.defineProperty(this, name, {
+                get: function () {
+                    return this['_' + name];
+                },
+                set: function (value) {
+                    if (this._watchers && this._watchers[name]) {
+                        this._watchers[name].forEach(function (watcher) {
+                            watcher(value, this['_' + name]);
+                        }.bind(this));
+                    }
+                    this['_' + name] = value;
                 }
-                this['_' + name] = value;
-            }
-        });
-    },
-    watch: function (name, watcher) {
-        this._watchers = this._watchers || {};
-        this._watchers[name] = this._watchers[name] || [];
-        this._watchers[name].push(watcher);
-    }
-};
+            });
+        },
+        watch: function (name, watcher) {
+            this._watchers = this._watchers || {};
+            this._watchers[name] = this._watchers[name] || [];
+            this._watchers[name].push(watcher);
+        }
+    };
 
-ngr = {
-
-    define: function (name, mapping, deps, flags) {
+    ngr.define = function (name, mapping, deps, flags) {
         var self = this;
         self._ngr_changeSource = self._ngr_changeSource || Object.create(WatchedBox);
         self._ngr_values = self._ngr_values || {};
@@ -77,9 +77,9 @@ ngr = {
             }
         };
         var selfChange = function (newvalue, oldvalue) {
-            console.log('s', name);
             if (newvalue === oldvalue) return;
-            if (self._ngr_visited[name] === 3 && flags && flags.indexOf('m') > -1) return;
+            // If update from one dependent, do not propagate change to other dependents
+            if (self._ngr_visited[name] === 3) return;
             if (mapping.inverse) {
                 deps.forEach(function (dep) {
                     if (!(dep in self._ngr_visited)) {
@@ -96,7 +96,7 @@ ngr = {
         });
 
         self._ngr_changeSource.watch(name, selfChange);
-    }
-};
 
+    };
 
+})();

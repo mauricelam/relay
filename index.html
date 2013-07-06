@@ -6,24 +6,24 @@
 </head>
 <body ng-controller="RelayTestController">
     A: <input type="text" ng-model="a" /><br />
-    B: <input type="text" ng-model="b" /><br />
-    C: <input type="text" ng-model="c" /><br />
-    D: <input type="text" ng-model="d" /><br />
+    B = A + 1: <input type="text" ng-model="b" /><br />
+    C = B x 2: <input type="text" ng-model="c" /><br />
+    D = A ^ 2: <input type="text" ng-model="d" /><br />
+    sub = A - 3: <input type="text" ng-model="sub" /><br />
     <div id="sum">a + d = {{sum}}</div>
     <div>{{obj}}</div>
-
-    Gender: <input type="text" ng-model="gender" /><br />
-    <!-- Gender: <input type="radio" value="male" ng-model="gender" checked />Male -->
-    <!-- <input type="radio" value="female" ng-model="gender" />Female<br /> -->
+    <hr />
+    Gender: <input type="radio" value="male" ng-model="gender" checked />Male
+    <input type="radio" value="female" ng-model="gender" />Female<br />
     First Name: <input type="text" ng-model="firstName" /><br />
     Last Name: <input type="text" ng-model="lastName" /><br />
     Full Name: <input type="text" ng-model="fullName" /><br />
     Prefix: <input type="text" ng-model="prefix" /><br />
-    Title: <input type="text" ng-model="title" />
+    Title: <textarea rows="1" ng-model="title" cols="{{title.length}}"></textarea>
     <span ng-show="!validTitle">Invalid</span><br />
-
     <script src="angular.min.js"></script>
     <script src="relay.js"></script>
+    <script src="relations.js"></script>
     <script src="relaytest.js"></script>
 </body>
 </html>
