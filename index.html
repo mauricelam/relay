@@ -5,22 +5,18 @@
     <title>Relay test</title>
 </head>
 <body ng-controller="RelayTestController">
-    A: <input type="text" ng-model="a" /><br />
-    B = A + 1: <input type="text" ng-model="b" /><br />
-    C = B x 2: <input type="text" ng-model="c" /><br />
-    D = A ^ 2: <input type="text" ng-model="d" /><br />
-    sub = A - 3: <input type="text" ng-model="sub" /><br />
-    <div id="sum">a + d = {{sum}}</div>
-    <div>{{obj}}</div>
-    <hr />
-    Gender: <input type="radio" value="male" ng-model="gender" checked />Male
-    <input type="radio" value="female" ng-model="gender" />Female<br />
-    First Name: <input type="text" ng-model="firstName" /><br />
-    Last Name: <input type="text" ng-model="lastName" /><br />
-    Full Name: <input type="text" ng-model="fullName" /><br />
-    Prefix: <input type="text" ng-model="prefix" /><br />
-    Title: <textarea rows="1" ng-model="title" cols="{{title.length}}"></textarea>
-    <span ng-show="!validTitle">Invalid</span><br />
+    <table>
+        <tr ng-repeat="v in variables">
+            <td><input type="text" ng-model="v.name" placeholder="name" ng-disabled="v.saved" /></td>
+            <td><input id="val" type="text" ng-model="$parent[v.name]" placeholder="value" ng-disabled="v.relation && !v.inverse" /></td>
+            <td><input type="text" ng-model="v.relation" placeholder="relation" ng-disabled="v.saved" /></td>
+            <td><input type="text" ng-model="v.inverse" placeholder="inverse" ng-disabled="v.saved" /></td>
+            <td><input type="text" ng-model="v.deps" placeholder="dependencies" ng-disabled="v.saved" /></td>
+            <td ng-show="!v.saved"><button ng-click="defineStr(v); v.saved = true">save</button></td>
+            <td ng-show="v.saved"><button ng-click="v.saved = false">edit</button></td>
+        </tr>
+    </table>
+    <button ng-click="variables.push({})">+ Add</button>
     <script src="angular.min.js"></script>
     <script src="relay.js"></script>
     <script src="relations.js"></script>

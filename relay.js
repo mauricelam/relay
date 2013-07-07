@@ -6,6 +6,9 @@ var ngr = ngr || {};
 
 var WatchedBox = {
         addProperty: function (name) {
+            // if (this.hasOwnProperty(name)) {
+            //     delete this[name];
+            // }
             Object.defineProperty(this, name, {
                 get: function () {
                     return this['_' + name];
@@ -17,7 +20,9 @@ var WatchedBox = {
                         }.bind(this));
                     }
                     this['_' + name] = value;
-                }
+                },
+                configurable: true,
+                enumerable: true
             });
         },
         watch: function (name, watcher) {
@@ -50,7 +55,9 @@ var WatchedBox = {
                 self._ngr_visited = {};
                 self._ngr_visited[name] = 1;
                 self._ngr_changeSource[name] = function (s) { s[name] = value; };
-            }
+            },
+            configurable: true,
+            enumerable: true
         });
 
         Object.defineProperty(self._ngr_assigner, name, {
@@ -60,9 +67,11 @@ var WatchedBox = {
             set: function (value) {
                 self._ngr_changeSource[name] = null;
                 self._ngr_values[name] = value;
-            }
+            },
+            configurable: true,
+            enumerable: true
         });
-        if (initialValue) {
+        if (!mapping) {
             self[name] = initialValue;
             return;
         }
