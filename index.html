@@ -8,7 +8,7 @@
     <table>
         <tr ng-repeat="v in variables">
             <td><input type="text" ng-model="v.name" placeholder="name" ng-disabled="v.saved" /></td>
-            <td><input id="val" type="text" ng-model="$parent[v.name]" placeholder="value" ng-disabled="v.relation && !v.inverse" /></td>
+            <td><input id="val" type="text" ng-model="$parent[v.name]" placeholder="value" ng-disabled="$parent.readonly(v.name)" /></td>
             <td><input type="text" ng-model="v.relation" placeholder="relation" ng-disabled="v.saved" /></td>
             <td><input type="text" ng-model="v.inverse" placeholder="inverse" ng-disabled="v.saved" /></td>
             <td><input type="text" ng-model="v.deps" placeholder="dependencies" ng-disabled="v.saved" /></td>
