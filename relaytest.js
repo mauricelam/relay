@@ -99,6 +99,10 @@ function RelayTestController ($scope) {
         if (v.value) $scope[v.name] = v.value;
         $scope.defineStr($scope.variables[i]);
     }
+    
+    $scope.watchRelation('title', function(val) {
+        console.log('title changed: ', val);
+    });
 
     // $scope.a = 10;
     // $scope.define('a');

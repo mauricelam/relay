@@ -1,5 +1,3 @@
-/*jshint es5:true */
-
 var ngr = ngr || {};
 
 (function () {
@@ -10,22 +8,16 @@ var ngr = ngr || {};
    * so changes inside mutable objects will not fire the observers.
    */
   var WatchedBox = {
-    addProperty: function (name) {
-      Object.defineProperty(this, name, {
-        get: function () {
-          return this['_' + name];
-        },
-        set: function (value) {
-          if (this._watchers && this._watchers[name]) {
-            this._watchers[name].forEach(function (watcher) {
-              watcher(value, this['_' + name]);
-            }.bind(this));
-          }
-          this['_' + name] = value;
-        },
-        configurable: true,
-        enumerable: true
-      });
+    get: function (name) {
+      return this['_' + name];
+    },
+    set: function (name, value) {
+      if (this._watchers && this._watchers[name]) {
+        this._watchers[name].forEach(function (watcher) {
+          watcher(value, this['_' + name]);
+        }, this);
+      }
+      this['_' + name] = value;
     },
     watch: function (name, watcher) {
       this._watchers = this._watchers || {};
@@ -45,6 +37,7 @@ var ngr = ngr || {};
     this.visited = {};
     this.assigner = {};
     this.readonly = {};
+    this.watchers = {};
     return this;
   }
 
@@ -52,6 +45,25 @@ var ngr = ngr || {};
     if (!rboxes[id])
       rboxes[id] = new RBox();
     return rboxes[id];
+  };
+
+  RBox.prototype.resolve = function(name) {
+    var source = this.changeSource.get(name);
+    source && source(this.assigner);
+    return this.values[name];
+  };
+
+  RBox.prototype.change = function(name, source, type) {
+    this.visited[name] = type;
+    this.changeSource.set(name, source);
+    window.clearTimeout(this._timer);
+    this._timer = window.setTimeout(this.resolveWatchers.bind(this), 0);
+  };
+
+  RBox.prototype.resolveWatchers = function() {
+    for (var name in this.watchers) {
+      this.watchers[name](this.resolve(name));
+    }
   };
 
   /**
@@ -79,14 +91,10 @@ var ngr = ngr || {};
     var self = this;
     var rbox = RBox.get(self.$id);
 
-    rbox.changeSource.addProperty(name);
-
     var initialValue = self[name];
     Object.defineProperty(self, name, {
       get: function () {
-        var source = rbox.changeSource[name];
-        source && source(rbox.assigner);
-        return rbox.values[name];
+        return rbox.resolve(name);
       },
       set: function (value) {
         if (rbox.readonly[name]) {
@@ -94,9 +102,8 @@ var ngr = ngr || {};
         }
         rbox.visited = {};
         rbox.visited[name] = 1;
-        rbox.changeSource[name] = function (s) { s[name] = value; };
+        rbox.changeSource.set(name, function (s) { s[name] = value; });
       },
-      configurable: true,
       enumerable: true
     });
 
@@ -105,24 +112,22 @@ var ngr = ngr || {};
         return self[name];
       },
       set: function (value) {
-        rbox.changeSource[name] = null;
+        rbox.changeSource.set(name, null);
         rbox.values[name] = value;
       },
-      configurable: true,
       enumerable: true
     });
     if (!mapping) {
       self[name] = initialValue;
       return;
     }
-    rbox.changeSource[name] = mapping.relation;
+    rbox.changeSource.set(name, mapping.relation);
 
     var depsChange = function (dep, newvalue, oldvalue) {
       if (newvalue === oldvalue) return;
       if (!(name in rbox.visited)) {
         console.log(dep, '--dep-->', name);
-        rbox.visited[name] = 3;
-        rbox.changeSource[name] = mapping.relation;
+        rbox.change(name, mapping.relation, 3);
       }
     };
     var selfChange = function (newvalue, oldvalue) {
@@ -130,23 +135,26 @@ var ngr = ngr || {};
       // If update from one dependent, do not propagate change to other dependents
       if (rbox.visited[name] === 3) return;
       if (mapping.inverse) {
-        deps.forEach(function (dep) {
-          if (!(dep in rbox.visited)) {
-            console.log(name, '--self-->', dep);
-            rbox.visited[dep] = 2;
-            rbox.changeSource[dep] = mapping.inverse;
-          }
-        });
+        for (var i = 0, count = deps.length; i < count; i++) {
+          if (!(deps[i] in rbox.visited))
+            rbox.change(deps[i], mapping.inverse, 2);
+        }
       }
     };
 
     rbox.readonly[name] = mapping && !mapping.inverse;
-    deps.forEach(function (dep) {
+    for (var i = 0, count = deps.length; i < count; i++) {
+      var dep = deps[i];
       rbox.changeSource.watch(dep, depsChange.bind(this, dep));
       rbox.readonly[name] = rbox.readonly[name] || rbox.readonly[dep];
-    });
+    }
 
     rbox.changeSource.watch(name, selfChange);
+  };
+
+  ngr.watchRelation = function (name, func) {
+    var rbox = RBox.get(this.$id);
+    rbox.watchers[name] = func;
   };
 
   ngr.readonly = function (name) {
