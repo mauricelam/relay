@@ -7,23 +7,24 @@ var ngr = ngr || {};
    * must be first called to initialize the variables. Also note that this workes by using setters,
    * so changes inside mutable objects will not fire the observers.
    */
-  var WatchedBox = {
-    get: function (name) {
-      return this['_' + name];
-    },
-    set: function (name, value) {
-      if (this._watchers && this._watchers[name]) {
-        this._watchers[name].forEach(function (watcher) {
-          watcher(value, this['_' + name]);
-        }, this);
-      }
-      this['_' + name] = value;
-    },
-    watch: function (name, watcher) {
-      this._watchers = this._watchers || {};
-      this._watchers[name] = this._watchers[name] || [];
-      this._watchers[name].push(watcher);
+  function WatchedBox() {
+    this._watchers = {};
+  }
+
+  WatchedBox.prototype.get = function (name) {
+    return this['_' + name];
+  };
+  WatchedBox.prototype.set = function (name, value) {
+    if (this._watchers && this._watchers[name]) {
+      this._watchers[name].forEach(function (watcher) {
+        watcher(value, this['_' + name]);
+      }, this);
     }
+    this['_' + name] = value;
+  };
+  WatchedBox.prototype.watch = function (name, watcher) {
+    this._watchers[name] = this._watchers[name] || [];
+    this._watchers[name].push(watcher);
   };
 
   /**
@@ -32,7 +33,7 @@ var ngr = ngr || {};
   var rboxes = {};
 
   function RBox() {
-    this.changeSource = Object.create(WatchedBox);
+    this.changeSource = new WatchedBox();
     this.values = {};
     this.visited = {};
     this.assigner = {};
@@ -125,10 +126,8 @@ var ngr = ngr || {};
 
     var depsChange = function (dep, newvalue, oldvalue) {
       if (newvalue === oldvalue) return;
-      if (!(name in rbox.visited)) {
-        console.log(dep, '--dep-->', name);
+      if (!(name in rbox.visited))
         rbox.change(name, mapping.relation, 3);
-      }
     };
     var selfChange = function (newvalue, oldvalue) {
       if (newvalue === oldvalue) return;
